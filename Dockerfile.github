@@ -3,6 +3,30 @@ FROM ghcr.io/actions/actions-runner:latest
 
 USER root
 
+# Install packages as root and prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      apt-utils \
+      ca-certificates \
+      curl \
+      apt-transport-https \
+      lsb-release \
+      gnupg \
+      dirmngr && \
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
+      > /etc/apt/sources.list.d/azure-cli.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends azure-cli && \
+    apt-get purge -y --auto-remove curl gnupg dirmngr && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Unset noninteractive mode for runtime
+ENV DEBIAN_FRONTEND=
+
 # install curl and jq
 RUN apt-get update && apt-get install -y curl jq && \
     apt-get clean && \
